@@ -1,0 +1,8 @@
+# Core Python utilities
+typing-extensions>=4.5.0
+
+# Structured logging & data handling
+pydantic>=2.0.0
+
+# Developer quality-of-life
+rich>=13.0.0
