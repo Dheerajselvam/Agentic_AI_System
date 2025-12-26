@@ -6,7 +6,7 @@ from evaluation.grounding import EvidenceGroundingEvaluator
 class DecisionEvaluator:
     def __init__(
         self,
-        semantic_threshold=0.5,
+        semantic_threshold=0.4,
         entailment_threshold=0.5,
         grounding_threshold=0.5
     ):

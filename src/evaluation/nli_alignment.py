@@ -8,4 +8,4 @@ class NLIAlignmentEvaluator:
         result = self.nli(f"{premise} </s> {hypothesis}")[0]
         if result["label"].lower() == "entailment":
             return result["score"]
-        return result["score"]
+        return 0.0
