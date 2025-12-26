@@ -3,8 +3,7 @@ from agent.agent import Agent
 def main():
     # Example goals
     goals = [
-        "Should we launch Product X in Market Y?",
-        "Are you a pig?"
+        "Should we launch Product X in Market Y?"
         ]
 
     for goal in goals:

@@ -1,10 +1,13 @@
-from evaluation.heuristics import HeuristicEvaluator
+from evaluation.evaluator import DecisionEvaluator
 
 class DecisionController:
+    def __init__(self):
+        self.evaluator = DecisionEvaluator()
+
     def decide(self, goal, decision_obj, evidence):
-        evaluation = HeuristicEvaluator.evaluate(
+        evaluation = self.evaluator.evaluate(
             goal,
-            decision_obj.conclusion,  # <-- use 'conclusion' field
+            decision_obj.conclusion,
             evidence
         )
 
@@ -12,7 +15,7 @@ class DecisionController:
             return {"status": "REPLAN", "evaluation": evaluation}
 
         if not evaluation["goal_aligned"]:
-            return {"status": "REJECT", "evaluation": evaluation}
+            return {"status": "REPLAN", "evaluation": evaluation}
 
         return {
             "status": "ACCEPT",

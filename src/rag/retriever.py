@@ -1,10 +1,8 @@
-class SimpleRetriever:
-    def __init__(self, index):
-        self.index = index
+class SemanticRetriever:
+    def __init__(self, embedder, store):
+        self.embedder = embedder
+        self.store = store
 
-    def retrieve(self, query: str):
-        results = []
-        for doc in self.index:
-            if any(word.lower() in doc["content"].lower() for word in query.split()):
-                results.append(doc["content"])
-        return results
+    def retrieve(self, query, top_k=3):
+        q_emb = self.embedder.embed([query])
+        return self.store.search(q_emb, top_k)

@@ -7,10 +7,12 @@ from agent.decision import DecisionController
 from tools.registry import ToolRegistry
 from tools.rag_tool import RAGSearchTool
 
-from rag.documents import load_documents
+from rag.loader import load_documents
 from rag.retriever import SimpleRetriever
 
 from observability.logger import Logger
+from agent.llm_wrappers import GPT4AllLLM
+
 
 
 class Agent:
@@ -36,7 +38,7 @@ class Agent:
         self.logger.log("AGENT_START", {"goal": self.state.goal})
 
         while not self.state.decision_ready:
-            plan = self.planner.plan(self.state)
+            plan = self.planner.plan(self.state, self.llm)
             self.logger.log("PLAN", plan)
 
             if plan["action"] == "USE_TOOL":
@@ -61,7 +63,7 @@ class Agent:
             # DECISION PHASE (DAY 5 CORE)   
             # ===============================
 
-            reasoning_context = self.reasoning_engine.derive(self.state)
+            reasoning_context = self.reasoning_engine.derive(self.state, self.llm)
 
             # LLM now returns a Decision object (schema-compliant)
             llm_decision = self.llm.generate_decision(

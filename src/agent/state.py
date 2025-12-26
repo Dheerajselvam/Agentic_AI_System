@@ -4,6 +4,7 @@ class AgentState:
         self.observations = {}     # factual evidence
         self.completed_tasks = set()
         self.decision_ready = False
+        self.failed_decisions = 0
 
     def add_observation(self, key: str, value: str):
         self.observations[key] = value
@@ -22,3 +23,6 @@ class AgentState:
         self.observations.clear()
         self.completed_tasks.clear()
         self.decision_ready = False
+
+    def register_failed_decision(self):
+        self.failed_decisions += 1

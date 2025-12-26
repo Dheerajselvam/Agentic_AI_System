@@ -1,37 +1,45 @@
-from schemas.actions import AgentAction
+from agent.llm_wrappers import GPT4AllLLM
 from schemas.decision import Decision
 
+
 class LLM:
-    def generate_next_action(self, context: str) -> AgentAction:
-        # Planner-level LLM
-        return AgentAction(
-            action_type="USE_TOOL",
-            tool_name="rag_search",
-            tool_query="Market Y demand growth",
-            rationale="Need demand data"
-        )
+    """
+    High-level LLM interface used by Agent.
+    Delegates actual model calls to llm_wrapper.
+    """
 
-    def generate_decision(self, goal: str, reasoning: list, evidence: dict[str, any]) -> Decision:
+    def __init__(self):
+        self.backend = GPT4AllLLM()
+
+    # ----------------------------
+    # PLANNING
+    # ----------------------------
+    def plan_next_action(self, state) -> dict:
         """
-        Generates a structured decision based on the current reasoning context and evidence.
+        Decide the next action based on agent state.
         """
+        state_context = {
+            "goal": state.goal,
+            "observations": state.observations,
+            "completed_tasks": list(state.completed_tasks),
+        }
 
-        # For demonstration, we create a simple heuristic conclusion
-        # In production: call LLM API and parse structured JSON
+        return self.backend.plan_next_action(state_context)
 
-        # Example logic (stub):
-        if "Market Y" in goal or "Product X" in goal:
-            conclusion = "Launch cautiously"
-            confidence = 0.7
-        else:
-            conclusion = "Cannot determine"
-            confidence = 0.3
-
-        # Include all available evidence
-        evidence_used = evidence.copy()
-
-        return Decision(
-            conclusion=conclusion,
-            confidence=confidence,
-            evidence_used=evidence_used
+    # ----------------------------
+    # DECISION MAKING
+    # ----------------------------
+    def generate_decision(
+        self,
+        goal: str,
+        reasoning: list,
+        evidence: dict
+    ) -> Decision:
+        """
+        Produce a structured Decision object.
+        """
+        return self.backend.generate_decision(
+            goal=goal,
+            reasoning=reasoning,
+            evidence=evidence
         )

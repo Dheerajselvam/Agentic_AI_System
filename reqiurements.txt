@@ -6,3 +6,7 @@ pydantic>=2.0.0
 
 # Developer quality-of-life
 rich>=13.0.0
+transformers
+sentence_transformers
+gpt4all
+faiss
