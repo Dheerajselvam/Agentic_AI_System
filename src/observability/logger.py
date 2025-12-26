@@ -1,12 +1,12 @@
 import json
 from datetime import datetime
 
-
-class TraceLogger:
-    def log(self, event_type: str, payload: dict):
+class Logger:
+    @staticmethod
+    def log(event: str, payload: dict):
         record = {
             "timestamp": datetime.utcnow().isoformat(),
-            "event": event_type,
+            "event": event,
             "payload": payload
         }
         print(json.dumps(record, indent=2))
