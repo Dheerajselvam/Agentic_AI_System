@@ -1,25 +1,44 @@
-from agent.planner import TaskPlanner
 from agent.state import AgentState
-from logging.trace_logger import TraceLogger
+from agent.planner import TaskPlanner
+from tools.registry import ToolRegistry
+from agent_logging.trace_logger import TraceLogger
+from schemas.actions import AgentAction
+from agent.decision import LaunchDecision
 
 
 class Agent:
-    def __init__(self, goal: str):
+    def __init__(self, goal: str, tools: ToolRegistry):
         self.state = AgentState(goal)
         self.planner = TaskPlanner()
+        self.tools = tools
         self.logger = TraceLogger()
 
     def run(self):
         self.logger.log("AGENT_START", {"goal": self.state.goal})
 
-        tasks = self.planner.decompose(self.state.goal)
-        for task in tasks:
-            self.state.add_task(task)
-            self.logger.log("TASK_CREATED", task.__dict__)
+        for step in range(3):  # bounded loop
+            action: AgentAction = self.planner.next_action(
+                context=str(self.state.memory)
+            )
 
-        # Stub execution loop
-        for task in self.state.tasks:
-            self.logger.log("TASK_EXECUTION_SKIPPED", {
-                "task_id": task.id,
-                "reason": "Tool execution not implemented yet"
-            })
+            self.logger.log("LLM_ACTION", action.__dict__)
+
+            if action.action_type == "USE_TOOL":
+                tool = self.tools.get(action.tool_name)
+                result = tool.run(action.tool_query)
+                self.state.memory[action.tool_name] = result
+
+                self.logger.log("TOOL_RESULT", {
+                    "tool": action.tool_name,
+                    "result": result
+                })
+
+            elif action.action_type == "FINAL_DECISION":
+                decision = LaunchDecision(
+                    recommendation="YES",
+                    rationale="Sufficient demand and acceptable risk",
+                    risks="Competitive pressure",
+                    assumptions="Cost projections hold"
+                )
+                self.logger.log("FINAL_DECISION", decision.__dict__)
+                break
