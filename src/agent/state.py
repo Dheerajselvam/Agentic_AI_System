@@ -1,19 +1,18 @@
-from typing import Dict, List
-from schemas.tasks import Task
-
-
 class AgentState:
     def __init__(self, goal: str):
         self.goal = goal
-        self.tasks: List[Task] = []
-        self.completed_tasks: Dict[str, Task] = {}
-        self.memory: Dict[str, str] = {}
+        self.observations = {}     # factual evidence
+        self.completed_tasks = set()
+        self.decision_ready = False
 
-    def add_task(self, task: Task):
-        self.tasks.append(task)
+    def add_observation(self, key: str, value: str):
+        self.observations[key] = value
 
-    def mark_done(self, task_id: str, result: str):
-        task = next(t for t in self.tasks if t.id == task_id)
-        task.status = "DONE"
-        task.result = result
-        self.completed_tasks[task_id] = task
+    def has_observation(self, key: str) -> bool:
+        return key in self.observations
+
+    def mark_task_complete(self, task: str):
+        self.completed_tasks.add(task)
+
+    def is_task_complete(self, task: str) -> bool:
+        return task in self.completed_tasks

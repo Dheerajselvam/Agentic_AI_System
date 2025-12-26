@@ -1,44 +1,39 @@
 from agent.state import AgentState
-from agent.planner import TaskPlanner
+from agent.planner import Planner
 from tools.registry import ToolRegistry
-from agent_logging.trace_logger import TraceLogger
-from schemas.actions import AgentAction
-from agent.decision import LaunchDecision
-
+from tools.rag_tool import RAGSearchTool
+from rag.retriever import SimpleRetriever
+from rag.documents import load_documents
 
 class Agent:
-    def __init__(self, goal: str, tools: ToolRegistry):
+    def __init__(self, goal):
         self.state = AgentState(goal)
-        self.planner = TaskPlanner()
-        self.tools = tools
-        self.logger = TraceLogger()
+        self.planner = Planner()
+        self.tools = ToolRegistry()
+
+        documents = load_documents()
+        retriever = SimpleRetriever(documents)
+        self.tools.register(RAGSearchTool(retriever))
 
     def run(self):
-        self.logger.log("AGENT_START", {"goal": self.state.goal})
+        while not self.state.decision_ready:
+            plan = self.planner.plan(self.state)
 
-        for step in range(3):  # bounded loop
-            action: AgentAction = self.planner.next_action(
-                context=str(self.state.memory)
-            )
+            if plan["action"] == "USE_TOOL":
+                tool = self.tools.get(plan["tool"])
+                result = tool.run(plan["query"])
 
-            self.logger.log("LLM_ACTION", action.__dict__)
 
-            if action.action_type == "USE_TOOL":
-                tool = self.tools.get(action.tool_name)
-                result = tool.run(action.tool_query)
-                self.state.memory[action.tool_name] = result
+                if "growth" in plan["query"].lower():
+                    self.state.add_observation("market_demand", result)
+                elif "risk" in plan["query"].lower():
+                    self.state.add_observation("risk", result)
 
-                self.logger.log("TOOL_RESULT", {
-                    "tool": action.tool_name,
-                    "result": result
-                })
+            elif plan["action"] == "DECIDE":
+                return self.make_decision()
 
-            elif action.action_type == "FINAL_DECISION":
-                decision = LaunchDecision(
-                    recommendation="YES",
-                    rationale="Sufficient demand and acceptable risk",
-                    risks="Competitive pressure",
-                    assumptions="Cost projections hold"
-                )
-                self.logger.log("FINAL_DECISION", decision.__dict__)
-                break
+    def make_decision(self):
+        return {
+            "decision": "Launch cautiously",
+            "evidence": self.state.observations
+        }

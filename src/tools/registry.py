@@ -10,4 +10,6 @@ class ToolRegistry:
         self.tools[tool.name] = tool
 
     def get(self, name: str) -> Tool:
+        if name not in self.tools:
+            raise ValueError(f"Tool '{name}' is not registered")
         return self.tools[name]
