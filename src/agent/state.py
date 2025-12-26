@@ -16,3 +16,9 @@ class AgentState:
 
     def is_task_complete(self, task: str) -> bool:
         return task in self.completed_tasks
+
+    def reset(self):
+        """Clear observations, completed tasks, and decision flag."""
+        self.observations.clear()
+        self.completed_tasks.clear()
+        self.decision_ready = False

@@ -1,12 +1,17 @@
 from agent.agent import Agent
 
-
 def main():
-    agent = Agent(goal="Are you a pig?")
-    result = agent.run()
+    # Example goals
+    goals = [
+        "Should we launch Product X in Market Y?",
+        "Are you a pig?"
+        ]
 
-    print("\n=== FINAL OUTPUT ===")
-    print(result)
+    for goal in goals:
+        agent = Agent(goal)
+        output = agent.run()
+        print("\n=== FINAL OUTPUT ===")
+        print(output)
 
 
 if __name__ == "__main__":
