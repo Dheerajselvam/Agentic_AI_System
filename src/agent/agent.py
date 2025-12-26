@@ -7,11 +7,8 @@ from agent.decision import DecisionController
 from tools.registry import ToolRegistry
 from tools.rag_tool import RAGSearchTool
 
-from rag.loader import load_documents
-from rag.retriever import SimpleRetriever
-
 from observability.logger import Logger
-from agent.llm_wrappers import GPT4AllLLM
+from schemas.decision import Decision
 
 
 
@@ -27,9 +24,7 @@ class Agent:
         self.tools = ToolRegistry()
 
         # --- RAG setup (already existed conceptually) ---
-        documents = load_documents()
-        retriever = SimpleRetriever(documents)
-        self.tools.register(RAGSearchTool(retriever))
+        self.tools.register(RAGSearchTool())
 
         self.MAX_REPLANS = 3
         self.replans_done = 0
@@ -78,7 +73,12 @@ class Agent:
                 evidence=self.state.observations
             )
 
-            self.logger.log("EVALUATION_RESULT", decision_result)
+            log_safe_result = decision_result.copy()
+
+            if isinstance(log_safe_result.get("decision"), Decision):
+                log_safe_result["decision"] = log_safe_result["decision"].to_dict()
+
+            self.logger.log("EVALUATION_RESULT", log_safe_result)
 
             # --- Control behavior based on evaluation ---
             if decision_result["status"] == "REPLAN":

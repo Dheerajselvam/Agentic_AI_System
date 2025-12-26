@@ -10,15 +10,15 @@ class DecisionController:
             decision_obj.conclusion,
             evidence
         )
-
-        if evaluation["hallucinated"]:
+        if not evidence:
             return {"status": "REPLAN", "evaluation": evaluation}
-
-        if not evaluation["goal_aligned"]:
+        elif evaluation["hallucinated"]:
             return {"status": "REPLAN", "evaluation": evaluation}
-
-        return {
-            "status": "ACCEPT",
-            "decision": decision_obj,
-            "evaluation": evaluation
-        }
+        elif not evaluation["goal_aligned"]:
+            return {"status": "REPLAN", "evaluation": evaluation}
+        else:
+            return {
+                "status": "ACCEPT",
+                "decision": decision_obj,
+                "evaluation": evaluation
+            }

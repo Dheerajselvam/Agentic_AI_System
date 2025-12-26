@@ -1,5 +1,7 @@
 from gpt4all import GPT4All
 from schemas.decision import Decision
+import json
+import re
 
 class GPT4AllLLM:
     def __init__(self, model_name: str = "orca-mini-3b-gguf2-q4_0.gguf"):
@@ -7,38 +9,65 @@ class GPT4AllLLM:
 
     def generate_decision(self, goal: str, reasoning: list, evidence: dict) -> Decision:
         prompt = f"""
-                        Goal:
-                        {goal}
+                You are making a decision.
 
-                        Reasoning:
-                        {reasoning}
+                Fill in the JSON below.
+                Do NOT change keys.
+                Do NOT add text.
+                Do NOT explain anything.
 
-                        Evidence:
-                        {evidence}
+                JSON:
+                {{
+                "conclusion": "",
+                "confidence": 0.0,
+                "evidence_used": {evidence}
+                }}
 
-                        Instruction:
-                        Return STRICT JSON with keys:
-                        - conclusion (string)
-                        - confidence (float 0-1)
-                        - evidence_used (object)
-                        """
+                Rules:
+                - conclusion must be one of:
+                - "ACCEPT"
+                - "REJECT"
+                - "CANNOT_DETERMINE"
+                - confidence must be between 0.0 and 1.0
+
+                Goal:
+                {goal}
+
+                Reasoning:
+                {reasoning}
+                """
+
 
         output = self.model.generate(prompt)
+        decision_json = self.extract_json(output)
+        print("This is output: ", output)
+        return Decision(
+            conclusion=decision_json.get("conclusion", "CANNOT_DETERMINE"),
+            confidence=float(decision_json.get("confidence", 0.3)),
+            evidence_used=decision_json.get("evidence_used", evidence)
+        )
+        
+        # except Exception:
+        #     return Decision(
+        #         conclusion="Cannot determine",
+        #         confidence=0.3,
+        #         evidence_used=evidence
+        #     )
 
+
+
+    def extract_json(self, text: str) -> dict:
+        """
+        Extract the first JSON object found in text.
+        """
         try:
-            import json
-            decision_json = json.loads(output)
-            return Decision(
-                conclusion=decision_json["conclusion"],
-                confidence=float(decision_json["confidence"]),
-                evidence_used=decision_json.get("evidence_used", {})
-            )
+            match = re.search(r"\{.*\}", text, re.DOTALL)
+            if not match:
+                raise ValueError("No JSON object found")
+            return json.loads(match.group())
         except Exception:
-            return Decision(
-                conclusion="Cannot determine",
-                confidence=0.3,
-                evidence_used=evidence
-            )
+            return {}
+
 
     def plan_next_action(self, state_context: dict):
         prompt = f"""
